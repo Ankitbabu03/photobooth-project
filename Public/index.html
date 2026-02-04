@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Photo Booth</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>📸 Photo Booth</h1>
+
+    <!-- Camera Section -->
+    <div class="camera-section">
+      <video id="video" autoplay playsinline muted></video>
+      <button id="snapBtn" class="btn">📸 Take Photo</button>
+    </div>
+
+    <!-- Preview Section -->
+    <div class="preview-section" style="display: none;">
+      <img id="preview" />
+      <div class="controls">
+        <button id="retakeBtn" class="btn">🔄 Retake</button>
+        <button id="saveBtn" class="btn primary">💾 Save Photo</button>
+      </div>
+    </div>
+
+    <!-- Gallery -->
+    <div class="gallery-section">
+      <h2>🖼️ Gallery</h2>
+      <div id="gallery" class="gallery"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
