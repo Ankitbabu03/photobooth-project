@@ -1,13 +1,12 @@
 {
-  "name": "photobooth-website",
+  "name": "photobooth-project",
   "version": "1.0.0",
-  "description": "A simple photo booth web app",
-  "main": "app.js",
   "scripts": {
     "start": "node app.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "multer": "^1.4.5-lts.1"
+    "multer": "^1.4.5-lts.1",
+    "cloudinary": "^1.41.0"
   }
 }

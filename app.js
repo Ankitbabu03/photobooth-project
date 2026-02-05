@@ -1,78 +1,70 @@
 const express = require('express');
 const path = require('path');
 const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/* ===============================
-   Ensure uploads folder exists
-   =============================== */
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
-
-/* ===============================
-   Multer storage setup
-   =============================== */
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueName =
-      Date.now() +
-      '-' +
-      Math.round(Math.random() * 1e9) +
-      path.extname(file.originalname);
-    cb(null, uniqueName);
-  }
+/* =====================
+   Cloudinary Config
+   ===================== */
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET
 });
 
-const upload = multer({ storage });
+/* =====================
+   Multer (temporary)
+   ===================== */
+const upload = multer({ dest: 'temp/' });
 
-/* ===============================
-   Static files
-   =============================== */
+/* =====================
+   Static Files
+   ===================== */
 app.use(express.static('public'));
-app.use('/uploads', express.static('uploads'));
 
-/* ===============================
+/* =====================
    Routes
-   =============================== */
+   ===================== */
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Get all photos
-app.get('/api/photos', (req, res) => {
-  fs.readdir(uploadDir, (err, files) => {
-    if (err) {
-      return res.status(500).json({ error: 'Could not read folder' });
-    }
+/* Upload photo to Cloudinary */
+app.post('/upload', upload.single('photo'), async (req, res) => {
+  try {
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'photobooth'
+    });
 
-    const images = files.filter(file =>
-      file.match(/\.(jpg|jpeg|png)$/i)
-    );
+    fs.unlinkSync(req.file.path); // delete temp file
 
-    res.json({ images });
-  });
-});
-
-// Upload photo
-app.post('/upload', upload.single('photo'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No photo received' });
+    res.json({ url: result.secure_url });
+  } catch (err) {
+    res.status(500).json({ error: 'Upload failed' });
   }
-
-  res.json({ filename: req.file.filename });
 });
 
-/* ===============================
-   Start server
-   =============================== */
+/* Load gallery from Cloudinary */
+app.get('/api/photos', async (req, res) => {
+  try {
+    const result = await cloudinary.search
+      .expression('folder:photobooth')
+      .sort_by('created_at', 'desc')
+      .max_results(30)
+      .execute();
+
+    const images = result.resources.map(img => img.secure_url);
+    res.json({ images });
+  } catch (err) {
+    res.status(500).json({ error: 'Gallery load failed' });
+  }
+});
+
+/* Start Server */
 app.listen(PORT, () => {
-  console.log(`📷 Photobooth running on port ${PORT}`);
+  console.log(`📸 Photobooth running on port ${PORT}`);
 });
